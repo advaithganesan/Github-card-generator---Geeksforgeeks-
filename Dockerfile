@@ -1,21 +1,12 @@
-FROM python:3.12-slim
+FROM nginx:alpine
 
-WORKDIR /app
+# Copy the frontend file
+COPY index.html /usr/share/nginx/html/index.html.template
 
-# Install uv for fast dependency management
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Default backend URL
+ENV BACKEND_URL=http://localhost:8080
 
-# Copy dependency files
-COPY requirements.txt .
+# Use envsubst to replace the backend URL at runtime and start nginx
+CMD ["/bin/sh", "-c", "envsubst '${BACKEND_URL}' < /usr/share/nginx/html/index.html.template > /usr/share/nginx/html/index.html && exec nginx -g 'daemon off;'"]
 
-# Install dependencies using uv
-RUN uv pip install --system -r requirements.txt
-
-# Copy source code
-COPY . .
-
-# Expose port 8080
-EXPOSE 8080
-
-# Command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+EXPOSE 80

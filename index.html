@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Dev Card Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent: #238636;
+            --accent-hover: #2ea043;
+            --border-color: #30363d;
+            --error: #f85149;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            background: var(--card-bg);
+            padding: 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: border-color 0.2s;
+        }
+
+        .input-group:focus-within {
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
+        }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 12px 16px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background-color: var(--border-color);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading Skeleton */
+        .skeleton {
+            display: none;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            width: 400px;
+            margin: 0 auto;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .skeleton-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .skeleton-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--border-color);
+            margin-right: 15px;
+        }
+
+        .skeleton-line {
+            height: 12px;
+            background: var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        /* Result Area */
+        #result-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #card-wrapper {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            background-color: var(--border-color);
+            border: 1px solid #484f58;
+        }
+
+        .btn-secondary:hover {
+            background-color: #3b434b;
+        }
+
+        .error-message {
+            display: none;
+            color: var(--error);
+            background: rgba(248, 81, 73, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--error);
+            font-size: 0.9rem;
+        }
+
+        footer {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GitHub Dev Card</h1>
+            <p>Enter any public GitHub username</p>
+        </header>
+
+        <div class="input-group">
+            <input type="text" id="username" placeholder="e.g. torvalds" onkeypress="handleKeyPress(event)">
+            <button id="generate-btn" onclick="generateCard()">Generate Card</button>
+        </div>
+
+        <div id="error-box" class="error-message"></div>
+
+        <!-- Skeleton Loader -->
+        <div id="skeleton" class="skeleton">
+            <div class="skeleton-header">
+                <div class="skeleton-circle"></div>
+                <div style="flex:1">
+                    <div class="skeleton-line" style="width: 60%"></div>
+                    <div class="skeleton-line" style="width: 40%"></div>
+                </div>
+            </div>
+            <div class="skeleton-line" style="width: 90%"></div>
+            <div class="skeleton-line" style="width: 80%; margin-bottom: 20px;"></div>
+            <div class="skeleton-line" style="height: 100px; width: 100%"></div>
+        </div>
+
+        <!-- Result -->
+        <div id="result-container">
+            <div id="card-wrapper"></div>
+            <div class="action-buttons">
+                <button class="btn-secondary" onclick="copyUrl()">🔗 Share Card URL</button>
+                <button class="btn-secondary" onclick="reset()">✨ Create New</button>
+            </div>
+        </div>
+
+        <footer>
+            Powered by Google ADK, MCP & Gemini 2.5 Flash
+        </footer>
+    </div>
+
+    <script>
+        let currentCardUrl = '';
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') generateCard();
+        }
+
+        async function generateCard() {
+            const usernameInput = document.getElementById('username');
+            const username = usernameInput.value.trim();
+            const btn = document.getElementById('generate-btn');
+            const skeleton = document.getElementById('skeleton');
+            const resultContainer = document.getElementById('result-container');
+            const errorBox = document.getElementById('error-box');
+
+            if (!username) return;
+
+            // Reset UI
+            errorBox.style.display = 'none';
+            resultContainer.style.display = 'none';
+            btn.disabled = true;
+            skeleton.style.display = 'block';
+
+            try {
+                const response = await fetch('${BACKEND_URL}/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.detail || 'Failed to generate card');
+
+                if (data.status === 'success') {
+                    // Fetch the actual HTML content
+                    const cardRes = await fetch(`${BACKEND_URL}/card/` + username);
+                    const cardData = await cardRes.json();
+                    
+                    document.getElementById('card-wrapper').innerHTML = cardData.html;
+                    currentCardUrl = `http://localhost:8080${data.card_url}`;
+                    
+                    skeleton.style.display = 'none';
+                    resultContainer.style.display = 'flex';
+                } else {
+                    throw new Error(data.message || 'Something went wrong');
+                }
+            } catch (err) {
+                skeleton.style.display = 'none';
+                errorBox.innerText = `Oops! ${err.message}`;
+                errorBox.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function copyUrl() {
+            if (!currentCardUrl) return;
+            navigator.clipboard.writeText(currentCardUrl);
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = '✅ Copied!';
+            setTimeout(() => btn.innerText = originalText, 2000);
+        }
+
+        function reset() {
+            document.getElementById('result-container').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('username').focus();
+        }
+    </script>
+</body>
+</html>
