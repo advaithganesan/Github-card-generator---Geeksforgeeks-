@@ -1,2 +1,2 @@
-# Github-card-generator---Geeksforgeeks-
+# Github-card-generator-Geeksforgeeks
 ADK using GCP
